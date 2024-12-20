@@ -1,8 +1,10 @@
 ---
 services:
-  # Это также имя хоста контейнера в сети Docker (т.е. https://opensearch-node1/)
+  # RU: Это также имя хоста контейнера в сети Docker (т.е. https://opensearch-node1/)
+  # EN: This is also the hostname of the container on the Docker network (i.e. https://opensearch-node1 /)
   opensearch-node-with-prometheus-1:
-    # Укажите последний доступный образ - измените, если вам нужна конкретная версия
+    # RU: Укажите последний доступный образ - измените, если вам нужна конкретная версия
+    # EN: Specify the latest available image - change it if you need a specific version
     build:
       context: .
       args:
@@ -10,52 +12,65 @@ services:
     image: opensearch-with-prometheus:latest
     container_name: opensearch-node1
     environment:
-      # Назовите кластер
+      # RU: Назовите кластер
+      # EN: Name the cluster
       - cluster.name=opensearch-cluster
-      # Назовите узел, который будет работать в этом контейнере
+      # RU: Назовите узел, который будет работать в этом контейнере
+      # EN: Name the node that will work in this container
       - node.name=opensearch-node1
-      # Узлы, которые следует искать при обнаружении кластера
+      # RU: Узлы, которые следует искать при обнаружении кластера
+      # EN: Nodes to look for when detecting a cluster
       - discovery.seed_hosts=opensearch-node1,opensearch-node2
-      # Узлы, которые могут выполнять функции менеджера кластера
+      # RU: Узлы, которые могут выполнять функции менеджера кластера
+      # EN: Nodes that can serve as a cluster manager
       - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
-      # Отключите замену памяти в куче JVM
+      # RU: Отключите замену памяти в куче JVM
+      # EN: Disable memory swapping in the JVM heap
       - bootstrap.memory_lock=true
-      # Установите минимальный и максимальный размеры кучи JVM на уровне не менее 50% системной оперативной памяти
+      # RU: Установите минимальный и максимальный размеры кучи JVM на уровне не менее 50% системной оперативной памяти
+      # EN: Set the minimum and maximum JVM heap sizes to at least 50% of the system RAM
       - "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS_OPENSEARCH:-}"
-      # Устанавливает пароль пользователя demo admin при использовании демонстрационной конфигурации, необходимый для OpenSearch 2.12 и более поздних версий
+      # RU: Устанавливает пароль пользователя demo admin при использовании демонстрационной конфигурации, необходимый для OpenSearch 2.12 и более поздних версий
+      # EN: Sets the demo admin user password when using the demo configuration, required for OpenSearch 2.12 and later versions
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD:-StrongPassword123!}"
     ulimits:
       memlock:
-        # Установите для memlock значение unlimited (без мягкого или жесткого ограничения).
+        # RU: Установите для memlock значение unlimited (без мягкого или жесткого ограничения).
+        # EN: Set memlock to unlimited (no soft or hard limit).
         soft: -1
         hard: -1
       nofile:
-        # Максимальное количество открытых файлов для пользователя opensearch - не менее 65536
+        # RU: Максимальное количество открытых файлов для пользователя opensearch - не менее 65536
+        # EN: The maximum number of open files for an opensearch user is at least 65536
         soft: 65536
         hard: 65536
     volumes:
-      # Создается том с именем opensearch-data1 и подключается к контейнеру
+      # RU: Создается том с именем opensearch-data1 и подключается к контейнеру
+      # EN: A volume named opensearch-data1 is created and connected to the container
       - type: bind
         source: opensearch-data1
         target: /usr/share/opensearch/data
         bind:
           create_host_path: true
     ports:
-      # REST API
+      # RU: REST API
+      # EN: REST API
       - 9201:9200
-      # Анализатор производительности
+      # RU: Анализатор производительности
+      # EN: Performance Analyzer
       - 9601:9600
     networks:
-      # Все контейнеры будут подключены к одной сети Docker bridge
+      # RU: Все контейнеры будут подключены к одной сети Docker bridge
+      # EN: All containers will be connected to the same Docker bridge network
       - opensearch-net
   opensearch-node-with-prometheus-2:
-    # Это должен быть тот же образ, который использовался для opensearch-node1, чтобы избежать проблем
+    # RU: Это должен быть тот же образ, который использовался для opensearch-node1, чтобы избежать проблем
+    # EN: It should be the same image that was used for opensearch-node1 to avoid problems
     build:
       context: .
       args:
         - OPENSEARCH_VERSION=${OPENSEARCH_VERSION:-2.17.1}
     image: opensearch-with-prometheus:latest
-#    image: opensearchproject/opensearch:${OPENSEARCH_VERSION}
     container_name: opensearch-node2
     environment:
       - cluster.name=opensearch-cluster
@@ -63,9 +78,11 @@ services:
       - discovery.seed_hosts=opensearch-node1,opensearch-node2
       - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
       - bootstrap.memory_lock=true
-      # Установите минимальный и максимальный размеры кучи JVM на уровне не менее 50% системной оперативной памяти
+      # RU: Установите минимальный и максимальный размеры кучи JVM на уровне не менее 50% системной оперативной памяти
+      # EN: Set the minimum and maximum JVM heap sizes to at least 50% of the system RAM
       - "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS_OPENSEARCH:-}"
-      # Устанавливает пароль пользователя demo admin при использовании демонстрационной конфигурации, необходимый для OpenSearch 2.12 и более поздних версий
+      # RU: Устанавливает пароль пользователя demo admin при использовании демонстрационной конфигурации, необходимый для OpenSearch 2.12 и более поздних версий
+      # EN: Sets the demo admin user password when using the demo configuration, required for OpenSearch 2.12 and later versions
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD:-StrongPassword123!}"
     ulimits:
       memlock:
@@ -83,22 +100,27 @@ services:
     ports:
       # REST API
       - 9202:9200
-      # Анализатор производительности
+      # RU: Анализатор производительности
+      # EN: Performance Analyzer
       - 9602:9600
     networks:
       - opensearch-net
   opensearch-dashboards:
-    # Убедитесь, что версия opensearch-dashboards совпадает с версией opensearch, установленной на других узлах
+    # RU: Убедитесь, что версия opensearch-dashboards совпадает с версией opensearch, установленной на других узлах
+    # EN: Make sure that the version of opensearch dashboards matches the version of opensearch installed on other nodes
     image: opensearchproject/opensearch-dashboards:${OPENSEARCH_VERSION}
     container_name: opensearch-dashboards
     ports:
-      # Преобразовать порт хоста 5601 в порт контейнера 5601
+      # RU: Преобразовать порт хоста 5601 в порт контейнера 5601
+      # EN: Convert host port 5601 to container port 5601
       - 5601:5601
     expose:
-      # Предоставить порт 5601 для веб-доступа к информационным панелям OpenSearch
+      # RU: Предоставить порт 5601 для веб-доступа к информационным панелям OpenSearch
+      # EN: Provide port 5601 for web access to OpenSearch dashboards
       - "5601"
     environment:
-      # Определите узлы OpenSearch, к которым будут обращаться информационные панели OpenSearch
+      # RU: Определите узлы OpenSearch, к которым будут обращаться информационные панели OpenSearch
+      # EN: Identify OpenSearch nodes that will be accessed by OpenSearch dashboards
       OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
     networks:
       - opensearch-net
