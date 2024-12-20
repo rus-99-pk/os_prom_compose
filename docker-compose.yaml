@@ -1,0 +1,111 @@
+---
+services:
+  # Это также имя хоста контейнера в сети Docker (т.е. https://opensearch-node1/)
+  opensearch-node-with-prometheus-1:
+    # Укажите последний доступный образ - измените, если вам нужна конкретная версия
+    build:
+      context: .
+      args:
+        - OPENSEARCH_VERSION=${OPENSEARCH_VERSION:-2.17.1}
+    image: opensearch-with-prometheus:latest
+    container_name: opensearch-node1
+    environment:
+      # Назовите кластер
+      - cluster.name=opensearch-cluster
+      # Назовите узел, который будет работать в этом контейнере
+      - node.name=opensearch-node1
+      # Узлы, которые следует искать при обнаружении кластера
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      # Узлы, которые могут выполнять функции менеджера кластера
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+      # Отключите замену памяти в куче JVM
+      - bootstrap.memory_lock=true
+      # Установите минимальный и максимальный размеры кучи JVM на уровне не менее 50% системной оперативной памяти
+      - "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS_OPENSEARCH:-}"
+      # Устанавливает пароль пользователя demo admin при использовании демонстрационной конфигурации, необходимый для OpenSearch 2.12 и более поздних версий
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD:-StrongPassword123!}"
+    ulimits:
+      memlock:
+        # Установите для memlock значение unlimited (без мягкого или жесткого ограничения).
+        soft: -1
+        hard: -1
+      nofile:
+        # Максимальное количество открытых файлов для пользователя opensearch - не менее 65536
+        soft: 65536
+        hard: 65536
+    volumes:
+      # Создается том с именем opensearch-data1 и подключается к контейнеру
+      - type: bind
+        source: opensearch-data1
+        target: /usr/share/opensearch/data
+        bind:
+          create_host_path: true
+    ports:
+      # REST API
+      - 9201:9200
+      # Анализатор производительности
+      - 9601:9600
+    networks:
+      # Все контейнеры будут подключены к одной сети Docker bridge
+      - opensearch-net
+  opensearch-node-with-prometheus-2:
+    # Это должен быть тот же образ, который использовался для opensearch-node1, чтобы избежать проблем
+    build:
+      context: .
+      args:
+        - OPENSEARCH_VERSION=${OPENSEARCH_VERSION:-2.17.1}
+    image: opensearch-with-prometheus:latest
+#    image: opensearchproject/opensearch:${OPENSEARCH_VERSION}
+    container_name: opensearch-node2
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true
+      # Установите минимальный и максимальный размеры кучи JVM на уровне не менее 50% системной оперативной памяти
+      - "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS_OPENSEARCH:-}"
+      # Устанавливает пароль пользователя demo admin при использовании демонстрационной конфигурации, необходимый для OpenSearch 2.12 и более поздних версий
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD:-StrongPassword123!}"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - type: bind
+        source: opensearch-data2
+        target: /usr/share/opensearch/data
+        bind:
+          create_host_path: true
+    ports:
+      # REST API
+      - 9202:9200
+      # Анализатор производительности
+      - 9602:9600
+    networks:
+      - opensearch-net
+  opensearch-dashboards:
+    # Убедитесь, что версия opensearch-dashboards совпадает с версией opensearch, установленной на других узлах
+    image: opensearchproject/opensearch-dashboards:${OPENSEARCH_VERSION}
+    container_name: opensearch-dashboards
+    ports:
+      # Преобразовать порт хоста 5601 в порт контейнера 5601
+      - 5601:5601
+    expose:
+      # Предоставить порт 5601 для веб-доступа к информационным панелям OpenSearch
+      - "5601"
+    environment:
+      # Определите узлы OpenSearch, к которым будут обращаться информационные панели OpenSearch
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+networks:
+  opensearch-net:
